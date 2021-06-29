@@ -1,0 +1,39 @@
+id: com.hpremote.rgr
+runtime: org.freedesktop.Platform
+runtime-version: '19.08'
+sdk: org.freedesktop.Sdk
+command: rgr
+modules:
+  - name: rgreceiver
+    buildsystem: simple
+    build-commands:
+      - pwd
+      - bsdtar xf receiver/*.rpm
+      - install -m644 -D receiver/LICENSE.txt "/app/share/licenses/rgreceiver/LICENSE"
+      - chmod 755 etc/opt
+      - chmod 755 etc/opt/hpremote
+      - chmod 755 etc/opt/hpremote/*
+
+      # copy the directories
+      - cp -rpf ./opt/ /app/
+      - cp -rpf ./etc/ /app/
+      - cp -rpf ./usr/ /app/
+      # - cp -rpf ./source/ /app/
+
+      # install executable in /bin
+      - install -dm755 /app/bin
+      - echo -e "#!/bin/bash\n/app/opt/hpremote/rgreceiver/rgreceiver.sh" > /app/bin/rgr
+      - chmod 755 /app/bin/rgr
+    sources:
+      - type: archive
+        path: ZCentral_RB_2020.1.0_Linux_Receiver_M39127-001.tar.gz
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+  # Needs to talk to the network:
+  - --share=network
+  # OpenGL rendering
+  - --device=dri
+  # Does not handle wayland
+  - --unset-env=QT_QPA_PLATFORM
