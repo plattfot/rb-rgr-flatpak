@@ -1,6 +1,6 @@
-id: com.hpremote.rgr
+id: io.github.plattfot.rb_rgr
 runtime: org.freedesktop.Platform
-runtime-version: '19.08'
+runtime-version: '21.08'
 sdk: org.freedesktop.Sdk
 command: rgr
 modules:
@@ -8,25 +8,18 @@ modules:
     buildsystem: simple
     build-commands:
       - pwd
-      - bsdtar xf receiver/*.rpm
-      - install -m644 -D receiver/LICENSE.txt "/app/share/licenses/rgreceiver/LICENSE"
-      - chmod 755 etc/opt
-      - chmod 755 etc/opt/hpremote
-      - chmod 755 etc/opt/hpremote/*
-
+      - tar -xf receiver/rg_install_receiver_rpm.tar.gz
+      - bsdtar xf *.rpm
+      - install -m644 -D LICENSE.txt "/app/share/licenses/rgreceiver/LICENSE"
       # copy the directories
-      - cp -rpf ./opt/ /app/
-      - cp -rpf ./etc/ /app/
-      - cp -rpf ./usr/ /app/
-      # - cp -rpf ./source/ /app/
-
+      - find ./opt ./etc ./usr -type f -exec install -vDm 755 {} /app/{} \;
       # install executable in /bin
       - install -dm755 /app/bin
       - echo -e "#!/bin/bash\n/app/opt/hpremote/rgreceiver/rgreceiver.sh" > /app/bin/rgr
       - chmod 755 /app/bin/rgr
     sources:
       - type: archive
-        path: ZCentral_RB_2020.1.0_Linux_Receiver_M39127-001.tar.gz
+        path: ZCentral_RB_22.0_Linux_Receiver_M39127-007.tar.gz
 finish-args:
   # X11 + XShm access
   - --share=ipc
@@ -37,3 +30,5 @@ finish-args:
   - --device=dri
   # Does not handle wayland
   - --unset-env=QT_QPA_PLATFORM
+  # Point it to where it can find the libs
+  - --env=LD_LIBRARY_PATH=/app/opt/hpremote/rgreceiver/lib64
