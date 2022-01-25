@@ -1,0 +1,64 @@
+app-id: io.github.plattfot.hp-rgreceiver
+runtime: org.kde.Platform
+runtime-version: '5.15'
+sdk: org.kde.Sdk
+command: hp-rgreceiver
+modules:
+  - name: hp-rgreceiver
+    buildsystem: simple
+    build-commands:
+      - tar -xf receiver/rg_install_receiver_rpm.tar.gz
+      - bsdtar xf *.rpm
+      - install -m644 -D LICENSE.txt "/app/share/licenses/rgreceiver/LICENSE"
+      # copy the directories
+      - find ./opt ./etc -type f -exec install -vDm 755 {} /app/{} \;
+      # install executable in /bin
+      - install -dm755 /app/bin
+      - echo -e "#!/bin/bash\n/app/opt/hpremote/rgreceiver/rgreceiver.sh" > /app/bin/hp-rgreceiver
+      - chmod 755 /app/bin/hp-rgreceiver
+      # install application icon
+      - install -Dm751 ./opt/hpremote/rgreceiver/resources/icon16x16.png
+          /app/share/icons/hicolor/16x16/apps/io.github.plattfot.hp-rgreceiver.png
+      - install -Dm751 ./opt/hpremote/rgreceiver/resources/rgs-desktop.png
+          /app/share/icons/hicolor/256x256/apps/io.github.plattfot.hp-rgreceiver.png
+      # rename share data to match id
+      - install -D ./usr/share/applications/hp-rgreceiver.desktop
+          /app/share/applications/io.github.plattfot.hp-rgreceiver.desktop
+      - install -D ./usr/share/applications/hp-rgreceiver-config.desktop
+          /app/share/applications/io.github.plattfot.hp-rgreceiver-config.desktop
+      - install -D ./usr/share/applications/hp-rgreceiver-autolauncher.desktop
+          /app/share/applications/io.github.plattfot.hp-rgreceiver-autolauncher.desktop
+      - install -D ./usr/share/mime/packages/hp-rgreceiver-type.xml
+          /app/share/mime/packages/io.github.plattfot.hp-rgreceiver-type.xml
+      - install -D ./usr/share/polkit-1/actions/com.hp.hpremote.receiverconfig.policy
+          /app/share/polkit-1/actions/io.github.plattfot.hp-rgreceiverconfig.policy
+      - sed -i 's|Icon=.*|Icon=io.github.plattfot.hp-rgreceiver|' /app/share/applications/*.desktop
+      - sed -Ei 's|Exec=(.*)|Exec=/app\1|' /app/share/applications/*.desktop
+      # remove libs that exist in the org.kde.Platform
+      - rm -rf /app/opt/hpremote/rgreceiver/lib64/libQt*
+      - rm -rf /app/opt/hpremote/rgreceiver/lib64/libic*
+      - rm -rf /app/opt/hpremote/rgreceiver/lib64/libcrypto*
+      - rm -rf /app/opt/hpremote/rgreceiver/lib64/libssl*
+      - rm -rf /app/opt/hpremote/rgreceiver/lib64/libva*
+      # # fix missing NEEDED
+      - ln -s /app/opt/hpremote/rgreceiver/lib64/{libIceLiveSocket.so.3.7,libIceLiveSocket.so.37}
+      - ln -s /app/opt/hpremote/rgreceiver/lib64/{libIce.so.3.7.*,libIce.so.37}
+      - ln -s /app/opt/hpremote/rgreceiver/lib64/{libIceSSL.so.3.7.*,libIceSSL.so.37}
+    sources:
+      - type: archive
+        path: ZCentral_RB_22.1_Linux_Receiver_M39127-009.tar.gz
+
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+  # wayland access
+  - --socket=wayland
+  # Needs to talk to the network:
+  - --share=network
+  # OpenGL rendering
+  - --device=dri
+  # Crashes on wayland, force it to use xwayland
+  - --env=QT_QPA_PLATFORM=xcb
+  # Point it to where it can find the libs
+  - --env=LD_LIBRARY_PATH=/app/opt/hpremote/rgreceiver/lib64
