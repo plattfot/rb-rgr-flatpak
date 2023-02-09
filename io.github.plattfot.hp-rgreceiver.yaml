@@ -9,6 +9,14 @@ modules:
     build-commands:
       - tar -xf receiver/rg_install_receiver_rpm.tar.gz
       - bsdtar xf *.rpm
+      # Hack from AUR hgsreceiver-bin to enable hardware encoding
+      - mkdir opt/hpremote/registration
+      - grep UUID bios | tr A-Z a-z | tr -d - | cut -d ' ' -f2 > opt/hpremote/registration/H264
+      - mv opt/hpremote/rgreceiver/rgsmbiosreader opt/hpremote/rgreceiver/rgsmbiosreader.old
+      - echo '#!/bin/sh' > opt/hpremote/rgreceiver/rgsmbiosreader
+      - echo 'cat /app/opt/hpremote/registration/H264' >> opt/hpremote/rgreceiver/rgsmbiosreader
+      - chmod 6755 opt/hpremote/rgreceiver/rgsmbiosreader
+
       - install -m644 -D LICENSE.txt "/app/share/licenses/rgreceiver/LICENSE"
       # copy the directories
       - find ./opt ./etc -type f -exec install -vDm 755 {} /app/{} \;
@@ -17,10 +25,10 @@ modules:
       - echo -e "#!/bin/bash\n/app/opt/hpremote/rgreceiver/rgreceiver.sh" > /app/bin/hp-rgreceiver
       - chmod 755 /app/bin/hp-rgreceiver
       # install application icon
-      - install -Dm751 ./opt/hpremote/rgreceiver/resources/icon16x16.png
-          /app/share/icons/hicolor/16x16/apps/io.github.plattfot.hp-rgreceiver.png
-      - install -Dm751 ./opt/hpremote/rgreceiver/resources/rgs-desktop.png
-          /app/share/icons/hicolor/256x256/apps/io.github.plattfot.hp-rgreceiver.png
+      # - install -Dm751 ./opt/hpremote/rgreceiver/resources/icon16x16.png
+      #     /app/share/icons/hicolor/16x16/apps/io.github.plattfot.hp-rgreceiver.png
+      # - install -Dm751 ./opt/hpremote/rgreceiver/resources/rgs-desktop.png
+      #     /app/share/icons/hicolor/256x256/apps/io.github.plattfot.hp-rgreceiver.png
       # rename share data to match id
       - install -D ./usr/share/applications/hp-rgreceiver.desktop
           /app/share/applications/io.github.plattfot.hp-rgreceiver.desktop
@@ -47,6 +55,9 @@ modules:
     sources:
       - type: archive
         path: ZCentral_RB_22.1_Linux_Receiver_M39127-009.tar.gz
+      # To generate the file run 'sudo dmidecode -t 1 > bios'
+      - type: file
+        path: bios
 
 finish-args:
   # X11 + XShm access
